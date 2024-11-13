@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mental_health_tracker/screens/moodentry_form.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
+
+import '../screens/list_moodentry.dart';
+import '../screens/login.dart';
 // import 'package:mental_health_tracker/widgets/mood_card.dart';
 
 class ItemCard extends StatelessWidget {
@@ -11,6 +16,7 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Material(
       // Menentukan warna latar belakang dari tema aplikasi.
       color: Theme.of(context).colorScheme.secondary,
@@ -19,7 +25,7 @@ class ItemCard extends StatelessWidget {
 
       child: InkWell(
         // Aksi ketika kartu ditekan.
-        onTap: () {
+        onTap: () async {
           // Menampilkan pesan SnackBar saat kartu ditekan.
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -31,6 +37,38 @@ class ItemCard extends StatelessWidget {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const MoodEntryFormPage()));
             // TODO: Gunakan Navigator.push untuk melakukan navigasi ke MaterialPageRoute yang mencakup TrackerFormPage.
           }
+          else if (item.name == "Lihat Mood") {
+            Navigator.push(context,
+              MaterialPageRoute(
+                  builder: (context) => const MoodEntryPage()
+              ),
+            );
+          }
+          else if (item.name == "Logout") {
+            final response = await request.logout(
+              // TODO: Ganti URL dan jangan lupa tambahkan trailing slash (/) di akhir URL!
+                "http://localhost:8000/auth/logout/");
+            String message = response["message"];
+            if (context.mounted) {
+              if (response['status']) {
+                String uname = response["username"];
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("$message Sampai jumpa, $uname."),
+                ));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(message),
+                  ),
+                );
+              }
+            }
+          }
+
         },
         // Container untuk menyimpan Icon dan Text
         child: Container(
